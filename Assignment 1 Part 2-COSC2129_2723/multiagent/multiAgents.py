@@ -304,13 +304,18 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
 # --------------------------Q5-------------------------------#
 def betterEvaluationFunction(currentGameState):
     """
-    A feature-based evaluation function for Pacman (Q5).
-    Considers:
-      - current score,
-      - distance to closest food,
-      - number of remaining food pellets,
-      - ghost proximity and scared status,
-      - remaining capsules and distance to them.
+    The extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
+    evaluation function (question 5).
+
+    DESCRIPTION: Combines the following features:
+      - Base game score.
+      - Inverse distance to the closest food to encourage eating nearby pellets.
+      - Penalty proportional to number of remaining food to push clearing the board.
+      - Capsule handling: rewards being near capsules and penalizes having many left.
+      - Ghost handling: heavy penalty if a non-scared ghost is adjacent (to avoid death),
+        mild penalty for proximity to active ghosts, and reward for approaching scared ghosts.
+      - Weights: food distance is weighted to prioritize eating, ghost proximity penalties
+        prevent risky moves, capsules get moderate attraction.
     """
     pos = currentGameState.getPacmanPosition()
     foodGrid = currentGameState.getFood()
