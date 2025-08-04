@@ -1,0 +1,10 @@
+#!/bin/sh
+'''exec' "/Users/tin/Desktop/RMIT coures/AI/A1 part B/Assignment 1 Part 2-COSC2129_2723/multiagent/venv311/bin/python" "$0" "$@"
+' '''
+# -*- coding: utf-8 -*-
+import re
+import sys
+from pip._internal.cli.main import main
+if __name__ == '__main__':
+    sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
+    sys.exit(main())
