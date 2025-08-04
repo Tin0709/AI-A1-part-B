@@ -52,30 +52,46 @@ class ReflexAgent(Agent):
 
         return legalMoves[chosenIndex]
 
-    def evaluationFunction(self, currentGameState: GameState, action):
+    def evaluationFunction(self, currentGameState, action):
         """
-        Design a better evaluation function here.
-
-        The evaluation function takes in the current and proposed successor
-        GameStates (pacman.py) and returns a number, where higher numbers are better.
-
-        The code below extracts some useful information from the state, like the
-        remaining food (newFood) and Pacman position after moving (newPos).
-        newScaredTimes holds the number of moves that each ghost will remain
-        scared because of Pacman having eaten a power pellet.
-
-        Print out these variables to see what you're getting, then combine them
-        to create a masterful evaluation function.
+        A reflex evaluation function for Q1.
+        Considers: successor score, distance to closest food, ghost proximity,
+        capsule count, and scared times.
         """
-        # Useful information you can extract from a GameState (pacman.py)
-        successorGameState = currentGameState.generatePacmanSuccessor(action)
+        successorGameState = currentGameState.generateSuccessor(0, action)
         newPos = successorGameState.getPacmanPosition()
         newFood = successorGameState.getFood()
         newGhostStates = successorGameState.getGhostStates()
-        newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+        newScaredTimes = [gs.scaredTimer for gs in newGhostStates]
 
-        "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        score = successorGameState.getScore()
+
+        # 1. Food: closer is better (use reciprocal)
+        foodList = newFood.asList()
+        if foodList:
+            minFoodDist = min(manhattanDistance(newPos, food) for food in foodList)
+            score += 1.0 / (minFoodDist + 1)  # avoid div by zero
+
+        # 2. Ghosts: avoid active ghosts, chase scared ones
+        for ghostState in newGhostStates:
+            ghostPos = ghostState.getPosition()
+            dist = manhattanDistance(newPos, ghostPos)
+            if ghostState.scaredTimer == 0:
+                if dist <= 1:
+                    return -float('inf')  # immediate death, worst move
+                # penalize proximity to active ghosts
+                score -= 2.0 / (dist)
+            else:
+                # reward getting closer to scared ghosts (can eat them)
+                score += 1.5 / (dist + 1)
+
+        # 3. Capsules: fewer remaining is better (encourage eating)
+        capsules = successorGameState.getCapsules()
+        score -= 0.5 * len(capsules)
+
+        # 4. Bonus for eating food (implicit via successor score)
+
+        return score
 
 def scoreEvaluationFunction(currentGameState: GameState):
     """
