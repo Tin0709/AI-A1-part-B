@@ -299,15 +299,60 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
 
         return bestAction
 # --------------------------Q4-------------------------------#
-def betterEvaluationFunction(currentGameState: GameState):
-    """
-    Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
-    evaluation function (question 5).
 
-    DESCRIPTION: <write something here so we know what you did>
-    """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
 
+# --------------------------Q5-------------------------------#
+def betterEvaluationFunction(currentGameState):
+    """
+    A feature-based evaluation function for Pacman (Q5).
+    Considers:
+      - current score,
+      - distance to closest food,
+      - number of remaining food pellets,
+      - ghost proximity and scared status,
+      - remaining capsules and distance to them.
+    """
+    pos = currentGameState.getPacmanPosition()
+    foodGrid = currentGameState.getFood()
+    foodList = foodGrid.asList()
+    ghostStates = currentGameState.getGhostStates()
+    capsules = currentGameState.getCapsules()
+    scaredTimes = [gs.scaredTimer for gs in ghostStates]
+
+    # Base score
+    score = currentGameState.getScore()
+
+    # 1. Closest food: encourage eating (reciprocal)
+    if foodList:
+        dists = [manhattanDistance(pos, food) for food in foodList]
+        minFoodDist = min(dists)
+        score += 1.0 / (minFoodDist + 1) * 5  # weight toward food
+
+        # also penalize having too many food left
+        score -= 0.5 * len(foodList)
+
+    # 2. Capsules: encourage eating them, especially if ghosts are near
+    if capsules:
+        capDists = [manhattanDistance(pos, cap) for cap in capsules]
+        minCapDist = min(capDists)
+        score += 2.0 / (minCapDist + 1)  # go toward capsules
+        score -= 1.0 * len(capsules)    # fewer capsules is better
+
+    # 3. Ghosts: avoid active ghosts, chase scared ones
+    for ghostState in ghostStates:
+        ghostPos = ghostState.getPosition()
+        dist = manhattanDistance(pos, ghostPos)
+        if ghostState.scaredTimer > 0:
+            # Closer to a scared ghost is good (can eat it), but don't overvalue
+            score += 2.0 / (dist + 1)
+        else:
+            # If a ghost is too close, big penalty
+            if dist <= 1:
+                return -float('inf')
+            # otherwise mildly penalize proximity
+            score -= 3.0 / (dist)
+
+    return score
+# --------------------------Q5-------------------------------#
 # Abbreviation
 better = betterEvaluationFunction
